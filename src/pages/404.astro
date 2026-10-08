@@ -1,0 +1,35 @@
+---
+// Not found: one paper pinned to the wall, and the way back to the board.
+import "@fontsource-variable/geist/wght.css";
+import "@fontsource-variable/eb-garamond/wght.css";
+import "@fontsource-variable/caveat/wght.css";
+import { accent, site } from "../lib/content";
+const vars = `:root{--wall:${site.wall};--accent:${accent.light}}`;
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Page not found · {site.name}</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<Fragment set:html={`<style>${vars}</style>`} />
+<style>
+  body{margin:0;min-height:100dvh;display:grid;place-items:center;background:var(--wall);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Geist Variable",sans-serif;color:#1F1A15}
+  .lost{position:relative;width:min(360px,calc(100vw - 48px));padding:36px 32px 30px;background:#F8E27A;transform:rotate(-2deg);
+    box-shadow:0 1px 1px rgba(0,0,0,.2),0 14px 22px -12px rgba(0,0,0,.55);background-image:linear-gradient(315deg,rgba(0,0,0,.09) 0 16px,rgba(255,255,255,.16) 16px 17px,transparent 17px)}
+  .lost::before{content:"";position:absolute;left:50%;top:-8px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:radial-gradient(circle at 36% 32%,rgba(255,255,255,.75),transparent 42%),var(--accent);box-shadow:inset -2px -2px 3px rgba(0,0,0,.25)}
+  h1{margin:0;font:700 40px/1 "Caveat Variable",Caveat,cursive}
+  p{margin:12px 0 0}
+  a{color:inherit;text-decoration-color:var(--accent);text-underline-offset:3px}
+</style>
+</head>
+<body>
+<main class="lost">
+  <h1>Not on this board</h1>
+  <p>There is nothing pinned at this address.</p>
+  <p><a href="/">Back to {site.name.split(" ")[0]}'s board</a></p>
+</main>
+</body>
+</html>

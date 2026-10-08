@@ -1,0 +1,118 @@
+---
+// The whole site is one cork board. The home page is the board; /writing/<slug> is the same board
+// with that essay lifted off it as a sheet, so every essay still has its own address, preview card
+// and place in search results. Papers come from src/board/papers.ts, positions from
+// src/board/layout.json, wall colour and cork darkness from Site settings.
+import "@fontsource-variable/geist/wght.css";
+import "@fontsource-variable/geist/wght-italic.css";
+import "@fontsource-variable/eb-garamond/wght.css";
+import "@fontsource-variable/caveat/wght.css";
+import "../board/board.css";
+import { render } from "astro:content";
+import Shelf from "../components/Shelf.astro";
+import layout from "../board/layout.json";
+import { papers, type Data } from "../board/papers";
+import { about, accent, currentRole, day, inline, markMe, now, origin, owner, reading, repo, research, shown, site, summary, template, writing, years } from "../lib/content";
+import { stress } from "../lib/stress";
+
+interface Props { essay?: string }
+const { essay } = Astro.props;
+
+const posts = await writing();
+const on = await shown();
+const base: Data = {
+  site,
+  about,
+  now: on.has("now") ? now : null,
+  reading: on.has("reading") ? reading : null,
+  research: on.has("research") ? research : null,
+  posts: posts.map((p) => ({ slug: p.id, title: p.data.title, date: p.data.date.toISOString().slice(0, 10), blurb: p.data.blurb || "", link: p.data.link || "" })),
+  books: on.has("reading"),
+};
+// STRESS=1 npm run build: the same board with long content everywhere, for the fit check.
+const data = process.env.STRESS === "1" ? stress(base) : base;
+const board = papers(data, { day, inline, years, markMe });
+const essays = await Promise.all(posts.filter((p) => !p.data.link).map(async (p) => ({ post: p, Content: (await render(p)).Content })));
+const open = essays.find((e) => e.post.id === essay)?.post;
+
+// Head: the same SEO and link previews the Sidebar template generates.
+const title = open ? `${open.data.title} · ${site.name}` : site.name;
+const desc = open ? summary(open) : `${site.oneLiner} ${site.intro}`.trim();
+const host = origin(Astro.url);
+const path = Astro.url.pathname.replace(/\.html$/, "").replace(/\/index$/, "/") || "/";
+const img = host + (open ? `/og/writing/${open.id}.png` : "/og/home.png");
+const sameAs = site.social.map((l) => l.url).filter((u) => /^https?:/.test(u));
+const person = { "@type": "Person", name: site.name, url: host + "/", ...(site.photo && { image: host + site.photo }), ...(about.shortBio && { description: about.shortBio }), ...(currentRole ? { jobTitle: currentRole.role, worksFor: { "@type": "Organization", name: currentRole.org } } : {}), ...(sameAs.length && { sameAs }) };
+const ld = open
+  ? { "@context": "https://schema.org", "@type": "BlogPosting", headline: open.data.title, description: desc, url: host + path, image: img, datePublished: open.data.date.toISOString().slice(0, 10), author: person }
+  : { "@context": "https://schema.org", "@type": "ProfilePage", url: host + "/", mainEntity: person };
+const CORK = { natural: 0.08, warm: 0.24, dark: 0.4 } as Record<string, number>;
+const vars = `:root{--wall:${site.wall};--tint-a:${CORK[site.cork] ?? 0.24};--accent:${accent.light}}`;
+const boardData = { name: site.name, items: layout.items, decos: layout.decos };
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content={site.wall}>
+<title>{title}</title>
+<meta name="description" content={desc}>
+<meta name="author" content={site.name}>
+<link rel="canonical" href={host + path}>
+<meta property="og:site_name" content={site.name}>
+<meta property="og:title" content={open ? open.data.title : site.name}>
+<meta property="og:description" content={desc}>
+<meta property="og:type" content={open ? "article" : "website"}>
+<meta property="og:url" content={host + path}>
+<meta property="og:image" content={img}>
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="alternate" type="application/rss+xml" href="/rss.xml" title={`${site.name}: writing`}>
+<link rel="sitemap" type="application/xml" href="/sitemap.xml">
+<script type="application/ld+json" set:html={JSON.stringify(ld).replace(/</g, "\\u003c")} />
+<meta name="portfolio-template" content={`${template.name}@${template.version}`}>
+{owner && <meta name="portfolio-owner" content={owner}>}
+{repo && <meta name="portfolio-repo" content={repo}>}
+<Fragment set:html={`<style>${vars}</style>`} />
+</head>
+<body>
+<div id="fit">
+  <main id="stage" aria-label={`${site.name}'s board`}>
+    <Fragment set:html={board} />
+    <div id="decos" aria-hidden="true"></div>
+    <div id="dim"></div>
+  </main>
+</div>
+
+<dialog id="sheet" aria-label="Essay" open={open ? true : undefined}>
+  <div class="sheet" tabindex="-1">
+    <a class="close" id="unpin" href="/">Pin back</a>
+    {essays.map(({ post, Content }) => (
+      <article class="essay" id={`essay-${post.id}`} data-title={post.data.title} hidden={post.id !== open?.id}>
+        <p class="date">{day(post.data.date)} · {(post.body || "").split(/\s+/).filter(Boolean).length.toLocaleString("en")} words</p>
+        <h1>{post.data.title}</h1>
+        <Content />
+      </article>
+    ))}
+  </div>
+</dialog>
+
+{data.books && (
+  <dialog id="shelfdlg" aria-label="Bookshelf">
+    <div class="sheet shelf">
+      <button class="close" type="button" id="shelfclose">Pin back</button>
+      <h2>Reading</h2>
+      {reading.intro && <p class="src"><Fragment set:html={inline(reading.intro)} /></p>}
+      <Shelf goodreads={site.goodreads} style={site.shelf} />
+    </div>
+  </dialog>
+)}
+
+<script type="application/json" id="board-data" set:html={JSON.stringify(boardData).replace(/</g, "\\u003c")} />
+<script>import "../board/board.js";</script>
+</body>
+</html>

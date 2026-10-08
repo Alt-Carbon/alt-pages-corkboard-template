@@ -1,0 +1,13 @@
+---
+// An essay: the board with the essay lifted off it as a sheet. "Pin back" returns to the board.
+// Pieces published elsewhere have no page here; the contents sheet links to them directly.
+import Board from "../../layouts/Board.astro";
+import { writing } from "../../lib/content";
+
+export async function getStaticPaths() {
+  const posts = await writing();
+  return posts.filter((p) => !p.data.link).map((p) => ({ params: { slug: p.id }, props: { slug: p.id } }));
+}
+const { slug } = Astro.props;
+---
+<Board essay={slug} />
