@@ -12,7 +12,7 @@ import { render } from "astro:content";
 import Shelf from "../components/Shelf.astro";
 import layout from "../board/layout.json";
 import { papers, type Data } from "../board/papers";
-import { about, accent, currentRole, day, inline, markMe, now, origin, owner, reading, repo, research, shown, site, summary, template, writing, years } from "../lib/content";
+import { about, accent, currentRole, day, elsewhere, inline, markMe, now, origin, owner, reading, repo, research, shown, site, summary, template, whereIs, writing, writingPage, years } from "../lib/content";
 import { stress } from "../lib/stress";
 
 interface Props { essay?: string }
@@ -26,8 +26,9 @@ const base: Data = {
   now: on.has("now") ? now : null,
   reading: on.has("reading") ? reading : null,
   research: on.has("research") ? research : null,
-  posts: posts.map((p) => ({ slug: p.id, title: p.data.title, date: p.data.date.toISOString().slice(0, 10), blurb: p.data.blurb || "", link: p.data.link || "" })),
+  posts: posts.map((p) => ({ slug: p.id, title: p.data.title, date: p.data.date.toISOString().slice(0, 10), blurb: p.data.blurb || "", link: p.data.link || "", where: p.data.link ? whereIs(p.data.link) : "" })),
   books: on.has("reading"),
+  elsewhere,
 };
 // STRESS=1 npm run build: the same board with long content everywhere, for the fit check.
 const data = process.env.STRESS === "1" ? stress(base) : base;
@@ -48,7 +49,7 @@ const ld = open
   : { "@context": "https://schema.org", "@type": "ProfilePage", url: host + "/", mainEntity: person };
 const CORK = { natural: 0.08, warm: 0.24, dark: 0.4 } as Record<string, number>;
 const vars = `:root{--wall:${site.wall};--tint-a:${CORK[site.cork] ?? 0.24};--accent:${accent.light}}`;
-const boardData = { name: site.name, items: layout.items, decos: layout.decos };
+const boardData = { name: site.name, items: layout.items, decos: layout.decos, hide: writingPage.hide };
 ---
 <!doctype html>
 <html lang="en">

@@ -157,6 +157,27 @@ if (nightstand) {
   }).catch(() => {});
 }
 let shelfReady = false;
+// ---------- the contents sheet: posts on Medium and Substack join the list from the posts sync, newest
+// first, each with a chip saying where it lives. The sheet's cap does the rest (applyCaps).
+const toc = stage.querySelector(".toc ol");
+if (toc) {
+  fetch("/writing/elsewhere.json", { headers: { accept: "application/json" } }).then((r) => (r.ok ? r.json() : null)).then((v) => {
+    if (!v?.posts?.length) return;
+    const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+    const norm = (u) => String(u || "").trim().replace(/^https?:\/\/(www\.)?/, "").replace(/[?#].*$/, "").replace(/\/+$/, "").toLowerCase();
+    const out = new Set((DATA.hide || []).map(norm));
+    const WHERE = { medium: "Medium", substack: "Substack" };
+    for (const p of v.posts) {
+      if (!p.date || out.has(norm(p.url))) continue;
+      const li = document.createElement("li"); li.dataset.date = p.date;
+      li.innerHTML = `<a href="${esc(p.url)}"><span class="ttl">${esc(p.title)}</span><span class="where">${esc(WHERE[p.source] || p.source)}</span><span class="dots"></span><span class="date">${p.date.slice(0, 4)}</span></a>${p.blurb ? `<span class="blurb">${esc(p.blurb)}</span>` : ""}`;
+      const older = [...toc.children].find((row) => (row.dataset.date || "") < p.date);
+      toc.insertBefore(li, older ?? null);
+    }
+    applyCaps();
+  }).catch(() => {});
+}
+
 const openShelf = () => {
   if (!shelfReady) { shelfReady = true; document.dispatchEvent(new Event("astro:page-load")); } // Shelf.astro renders on this event
   shelfdlg.showModal();

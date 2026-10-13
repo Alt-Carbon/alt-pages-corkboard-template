@@ -20,6 +20,9 @@ export const Site = z.object({
   photo: z.string().default(""),
   social: z.array(link).default([]),
   goodreads: z.string().default(""),
+  // Where the owner publishes elsewhere; their newest posts join the Writing page (src/worker/core/posts.js).
+  medium: z.string().default(""),
+  substack: z.string().default(""),
   grain: z.boolean().default(true),
   // The cork board: the wall behind it and how dark the cork is.
   wall: z.string().regex(/^#[0-9a-fA-F]{6}$/, "wall must be a colour like #DED6C4").catch("#DED6C4").default("#DED6C4"),
@@ -78,8 +81,9 @@ export const Reading = z.object({
   misc: z.array(z.object({ ...oldLink, kind: z.string().default("") })).default([]),
 });
 
-// The Writing page itself (its pieces are content/writing/*.md).
-export const WritingPage = z.object({ intro: z.string().default("") });
+// The Writing page itself (its pieces are content/writing/*.md). `hide` lists the addresses of
+// Medium or Substack posts to leave off the page.
+export const WritingPage = z.object({ intro: z.string().default(""), hide: z.array(z.string()).default([]) });
 
 export const Research = z.object({
   intro: z.string().default(""),

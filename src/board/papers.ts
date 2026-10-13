@@ -18,8 +18,9 @@ export type Data = {
   now: { updated: string; groups: { heading: string; items: string[] }[] } | null;
   reading: { intro: string; links: { title: string; by: string; note: string; url: string }[] } | null;
   research: { items: { title: string; authors: string; venue: string; year: number; kind: string; url: string }[] } | null;
-  posts: { slug: string; title: string; date: string; blurb: string; link: string }[];
+  posts: { slug: string; title: string; date: string; blurb: string; link: string; where: string }[];   // where: the chip for a piece on another site
   books: boolean;
+  elsewhere: boolean;   // Medium or Substack set: their posts join the contents sheet in the browser
 };
 type H = { day: (d: string) => string; inline: (s: string) => string; years: (e: { start: string; end: string }) => string; markMe: (a: string) => string };
 
@@ -142,7 +143,7 @@ function nightstand() {
 }
 
 function contents(d: Data, h: H) {
-  const rows = d.posts.map((p) => `<li><a ${p.link ? `href="${esc(p.link)}"` : `href="/writing/${esc(p.slug)}" data-essay="${esc(p.slug)}"`}><span class="ttl">${esc(p.title)}</span><span class="dots"></span><span class="date">${p.date.slice(0, 4)}</span></a>${p.blurb ? `<span class="blurb">${esc(p.blurb)}</span>` : ""}</li>`).join("");
+  const rows = d.posts.map((p) => `<li data-date="${esc(p.date)}"><a ${p.link ? `href="${esc(p.link)}"` : `href="/writing/${esc(p.slug)}" data-essay="${esc(p.slug)}"`}><span class="ttl">${esc(p.title)}</span>${p.where ? `<span class="where">${esc(p.where)}</span>` : ""}<span class="dots"></span><span class="date">${p.date.slice(0, 4)}</span></a>${p.blurb ? `<span class="blurb">${esc(p.blurb)}</span>` : ""}</li>`).join("");
   return `<section class="item toc" data-id="writing" aria-label="Writing">
   ${pin()}
   <h2>Writing</h2>
@@ -191,6 +192,6 @@ export function papers(d: Data, h: H): string {
   return [
     badge(d), letters(d), polaroid(d), strip(d), memo(d, h),
     d.now && bigNote(d, h), d.now && calendar(d), d.books && nightstand(), d.reading?.links.length && receipt(d),
-    d.research?.items.length && stapled(d, h), d.posts.length && contents(d, h), stamps(d), call(d), postcard(d, h),
+    d.research?.items.length && stapled(d, h), (d.posts.length || d.elsewhere) && contents(d, h), stamps(d), call(d), postcard(d, h),
   ].filter(Boolean).join("\n");
 }

@@ -15,7 +15,8 @@
     "check": "astro check",
     "test": "node --test \"test/*.test.mjs\"",
     "sample:shelf": "node scripts/sample-shelf.mjs",
-    "check:fit": "node scripts/check-fit.mjs"
+    "check:fit": "node scripts/check-fit.mjs",
+    "sample:posts": "node scripts/sample-posts.mjs"
   },
   "dependencies": {
     "@fontsource-variable/eb-garamond": "^5.3.0",

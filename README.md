@@ -66,6 +66,10 @@ The site's address isn't known at build time, so these carry `https://__origin__
 
 `src/worker/` is the site's Worker, unchanged from the Sidebar template. It reads the public Goodreads shelves named in `content/site.json` on a schedule, keeps them in KV, and serves them at `/reading/view.json` with covers under `/reading/covers/`. With no profile set, the sample shelf in `public/reading/view.json` is served. The nightstand card and the shelf that opens from it are drawn in the browser from that JSON, so books change without a rebuild. The shelf uses the style picked under Site settings → Bookshelf style.
 
+## Posts from Medium and Substack
+
+Set a Medium handle or address and a Substack address under Site settings, and the Worker reads their public RSS feeds (`medium.com/feed/@handle`, `<name>.substack.com/feed`) every 12 hours, keeps the newest posts in KV, and serves them at `/writing/elsewhere.json` (`src/worker/core/posts.js` parses, `posts-store.js` runs a sync, `posts-object.js` is the Durable Object with the alarm; all shared with the Sidebar template). The newest posts join the writing list in the browser, each with a small chip saying where it lives and a link to the post there. A feed that fails keeps its last good posts. Medium shares its 10 newest stories and Substack its 20 newest posts, so older pieces still need an entry under Writing with "Published elsewhere" set; those get the same chip. Posts to leave out are listed under Writing page → Posts to leave out. With nothing set, the sample posts in `public/writing/elsewhere.json` are served, regenerated with `npm run sample:posts`. `GET /writing/elsewhere/status` reports the last run; `POST /writing/elsewhere/sync` asks for one now.
+
 ## Layout
 
 | Path | What |
