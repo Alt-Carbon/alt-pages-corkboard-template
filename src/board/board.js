@@ -25,8 +25,11 @@ const STICKERS = {
   bolt: () => `<svg viewBox="0 0 48 72"><path d="M28 2L6 40h16l-6 30 26-44H26z" fill="${C.orange}" stroke="#fff" stroke-width="4" stroke-linejoin="round"/></svg>`,
   flower: () => `<svg viewBox="0 0 72 72"><g fill="${C.pink}" stroke="#fff" stroke-width="3"><ellipse cx="36" cy="14" rx="10" ry="13"/><ellipse cx="36" cy="58" rx="10" ry="13"/><ellipse cx="14" cy="36" rx="13" ry="10"/><ellipse cx="58" cy="36" rx="13" ry="10"/><ellipse cx="20" cy="20" rx="11" ry="11"/><ellipse cx="52" cy="20" rx="11" ry="11"/><ellipse cx="20" cy="52" rx="11" ry="11"/><ellipse cx="52" cy="52" rx="11" ry="11"/></g><circle cx="36" cy="36" r="11" fill="${C.gold}" stroke="#fff" stroke-width="3"/></svg>`,
 };
-const BRAND = { abundance: 136, "alter-cloud": 84, "alter-lettering": 92, darjeeling: 116, himalayan: 96, meee: 92, stamp: 100, seated: 124, icecream: 128, portrait: 112, "alter-cloud-b": 84 };
-for (const [k, h] of Object.entries(BRAND)) STICKERS[k] = () => `<img src="/board/stickers/${k}.png" alt="" style="height:${h}px" draggable="false">`;
+// Picture stickers: any PNG listed here and saved in public/board/stickers/ can be placed from
+// layout.json like the drawn ones (the number is its height on the board). None ship with the
+// template; Alt Carbon's merch stickers live only on Alt Carbon's own boards.
+const PICTURES = {};
+for (const [k, h] of Object.entries(PICTURES)) STICKERS[k] = () => `<img src="/board/stickers/${k}.png" alt="" style="height:${h}px" draggable="false">`;
 
 // ---------- place everything
 const items = [...stage.querySelectorAll(".item[data-id]")];

@@ -90,9 +90,8 @@ Set a Medium handle or address and a Substack address under Site settings, and t
 ## Not yet
 
 - **Arranging the board yourself.** Positions and stickers live in `layout.json`. A drag-and-drop mode existed in the prototype; it returns once it can commit the result to your repository.
-- **Your own stickers** beyond the built-in set.
-- **Crisper brand stickers.** The Alt Carbon stickers were taken from an animated GIF in the brand guidelines and have a 256-colour palette; the original files would replace them.
+- **Picking your own stickers in the editor.** For now, save a PNG in `public/board/stickers/`, list it in `PICTURES` in `src/board/board.js`, and place it in `layout.json`.
 
 ## Credits
 
-Cork texture: [ambientCG](https://ambientcg.com) Cork002, CC0. Stickers: Alt Carbon's merch designs, from the brand guidelines. Fonts: Geist and EB Garamond (OFL) for text, Caveat (OFL) for handwriting.
+Cork texture: [ambientCG](https://ambientcg.com) Cork002, CC0. Stickers: drawn in code, part of this template. Fonts: Geist and EB Garamond (OFL) for text, Caveat (OFL) for handwriting.
