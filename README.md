@@ -99,3 +99,9 @@ The editor signs in with GitHub, which needs a small server to turn a login code
 ## Credits
 
 Cork texture: [ambientCG](https://ambientcg.com) Cork002, CC0. Stickers: drawn in code, part of this template. Fonts: Geist and EB Garamond (OFL) for text, Caveat (OFL) for handwriting.
+
+## Signing in, the dashboard and updates
+
+- **Editor sign-in.** The editor at `/admin` signs in with GitHub through this site's own Worker (`src/worker/auth.js`), so nothing about signing in depends on the company. The first time, "Sign in with GitHub" opens `/auth/setup`: one click creates a small GitHub App on the owner's account, a second installs it on this repository. "Other sign-in service" under Site settings → Advanced overrides it.
+- **Where the site lives.** Once a day the site tells the company dashboard its address, repository and template (`src/worker/hello.js`), so nobody has to copy it from Cloudflare. Nothing about visitors is sent. Empty "Company dashboard" under Site settings → Advanced turns it off.
+- **Improvements.** Every Monday a GitHub Action (`.github/workflows/update.yml`, `scripts/update-from-template.mjs`) copies in this template's latest changes, leaving `content/`, `public/media/` and `.github/` alone and keeping the site's own Worker name, storage id and package name. It commits only if the site still builds and its tests pass. "Get improvements automatically" under Site settings → Advanced turns it off. Changes made by hand to the site's code outside those folders are replaced by the template's.

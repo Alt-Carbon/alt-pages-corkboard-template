@@ -5,6 +5,9 @@
   "type": "module",
   "description": "The Portfolio Project's cork board template: a personal site you own, edit at /admin, and keep. The whole site is one cork board.",
   "license": "MIT",
+  "portfolio": {
+    "templateRepo": "Alt-Carbon/alt-pages-corkboard-template"
+  },
   "scripts": {
     "predev": "node scripts/prepare.mjs",
     "dev": "astro dev",
@@ -16,7 +19,8 @@
     "test": "node --test \"test/*.test.mjs\"",
     "sample:shelf": "node scripts/sample-shelf.mjs",
     "check:fit": "node scripts/check-fit.mjs",
-    "sample:posts": "node scripts/sample-posts.mjs"
+    "sample:posts": "node scripts/sample-posts.mjs",
+    "update-from-template": "node scripts/update-from-template.mjs"
   },
   "dependencies": {
     "@fontsource-variable/eb-garamond": "^5.3.0",
