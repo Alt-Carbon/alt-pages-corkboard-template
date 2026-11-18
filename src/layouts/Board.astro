@@ -81,6 +81,8 @@ const boardData = { name: site.name, items: layout.items, decos: layout.decos, h
 <Fragment set:html={`<style>${vars}</style>`} />
 </head>
 <body>
+  <!-- The owner's content/custom.css: first in the body, so it comes after every stylesheet Astro adds to the head (and wins), yet still loads before anything is drawn. -->
+  <link rel="stylesheet" href="/custom.css" />
 <div id="fit">
   <main id="stage" aria-label={`${site.name}'s board`}>
     <Fragment set:html={board} />

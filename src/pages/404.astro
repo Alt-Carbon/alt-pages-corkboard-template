@@ -26,6 +26,8 @@ const vars = `:root{--wall:${site.wall};--accent:${accent.light}}`;
 </style>
 </head>
 <body>
+  <!-- The owner's content/custom.css: first in the body, so it comes after every stylesheet Astro adds to the head (and wins), yet still loads before anything is drawn. -->
+  <link rel="stylesheet" href="/custom.css" />
 <main class="lost">
   <h1>Not on this board</h1>
   <p>There is nothing pinned at this address.</p>
