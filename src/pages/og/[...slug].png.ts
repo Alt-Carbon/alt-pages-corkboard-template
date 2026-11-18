@@ -10,7 +10,7 @@ const plain = (s = "") => s.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/[*_
 export const getStaticPaths: GetStaticPaths = async () => {
   const posts = (await shown()).has("writing") ? await writing() : [];
   const cards: Record<string, Card> = {
-    home: { title: plain(site.oneLiner), subtitle: plain(site.intro) },
+    home: { title: plain(site.oneLiner) },
   };
   for (const p of posts.filter((p) => !p.data.link)) {
     cards[`writing/${p.id}`] = { title: p.data.title, subtitle: summary(p), kicker: `Writing · ${day(p.data.date)}` };

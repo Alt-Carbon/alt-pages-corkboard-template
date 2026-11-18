@@ -48,7 +48,7 @@ const off = (essay !== undefined && switchedOff("writing")) || (page !== undefin
 
 // Head: the same SEO and link previews the Sidebar template generates.
 const title = open ? `${open.data.title} · ${site.name}` : openPage ? `${openPage.data.title} · ${site.name}` : site.name;
-const desc = open ? summary(open) : openPage ? openPage.data.description || summary({ body: openPage.body, data: {} }) : `${site.oneLiner} ${site.intro}`.trim();
+const desc = open ? summary(open) : openPage ? openPage.data.description || summary({ body: openPage.body, data: {} }) : site.oneLiner;
 const host = origin(Astro.url);
 const path = Astro.url.pathname.replace(/\.html$/, "").replace(/\/index$/, "/") || "/";
 const img = host + (open ? `/og/writing/${open.id}.png` : "/og/home.png");

@@ -129,7 +129,6 @@ singletons:
       - { label: Name, name: name, widget: string }
       - { label: Greeting, name: greeting, widget: string, required: false, hint: "Spelt out in letter stickers across the top of the board, e.g. Hi, I am Asha. Shorter looks better." }
       - { label: One-liner, name: oneLiner, widget: string, hint: "On your name badge. About ten words; longer is cut to two lines on the board." }
-      - { label: Second line, name: intro, widget: text, required: false, hint: "Used in link previews and search results, after the one-liner. Not shown on the board." }
       - { label: Place, name: place, widget: string, required: false }
       - { label: Employer, name: employer, widget: string, required: false }
       - { label: Employer link, name: employerUrl, widget: string, required: false }
@@ -245,7 +244,7 @@ collections:
     fields:
       - { label: Title, name: title, widget: string }
       - { label: Date, name: date, widget: datetime, format: YYYY-MM-DD, time_format: false }
-      - { label: One-line blurb, name: blurb, widget: string, required: false }
+      - { label: Description, name: blurb, widget: string, required: true, hint: "One line, shown under the title wherever your writing is listed." }
       - { label: Published elsewhere, name: link, widget: string, required: false, hint: "If the piece lives on another site, its address. The list links there instead." }
       - { label: Draft, name: draft, widget: boolean, default: false, required: false, hint: "Drafts are not published." }
       - { label: Body, name: body, widget: markdown }
