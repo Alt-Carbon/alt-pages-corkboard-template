@@ -21,7 +21,9 @@ So a change anywhere else, such as `src/`, `public/` or `scripts/`, is undone at
 | The owner wants | Change | Survives updates |
 |---|---|---|
 | Colours, fonts, sizes, spacing, hiding something | `content/custom.css` | Yes |
-| Words, links, photos, which pages show | `content/*.json`, `content/writing/*.md`, or the editor at `/admin` | Yes |
+| Words, links, photos | `content/*.json`, `content/writing/*.md`, or the editor at `/admin` | Yes |
+| Hiding a page | its `"show": false` (`content/about.json`, `writing.json`, `research.json`, `reading.json`, `now.json`), or the page's switch in the editor | Yes |
+| A new page (Projects, Talks…) | a Markdown file in `content/pages/` (`title`, optional `show`, `photo`, `description`, then the text), or Your pages in the editor | Yes |
 | A setting the template already has (accent colour, …) | `content/site.json`, or the editor | Yes |
 | A different layout or new behaviour | `src/` | **No**, see below |
 
@@ -62,7 +64,7 @@ Files: `src/layouts/Board.astro` (the page), `src/board/board.css` (the board an
 
 ### Parts of the page
 
-`.sheet`, `.memo`, `.polaroid`, `.receipt`, `.cal`, `.letters`, `.post`, `.bignote` the kinds of paper · `.pin`, `.tape`, `.stamp`, `.deco` decorations · `.essay` a piece of writing on its own page (`/writing/<name>`)
+`.sheet`, `.memo`, `.polaroid`, `.receipt`, `.cal`, `.letters`, `.post`, `.bignote` the kinds of paper · `.leaf` one of your own pages (`content/pages`) on the board · `.pin`, `.tape`, `.stamp`, `.deco` decorations · `.essay` a piece of writing or one of your pages on its own address (`/writing/<name>`, `/<name>`)
 
 ## Ask first, or leave alone
 

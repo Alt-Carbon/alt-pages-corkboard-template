@@ -1,6 +1,7 @@
 // The board in the browser: places every paper and sticker from src/board/layout.json, scales the
-// 1600 x 1000 board to the window, fades capped papers, lifts a paper to read it, opens essays as a
-// sheet (each essay also has its own address, /writing/<slug>), fills the nightstand from the reading
+// 1600 x 1000 board (wider with the owner's own pages on it) to the window, fades capped papers, lifts
+// a paper to read it, opens essays and the owner's pages as a sheet (each also has its own address,
+// /writing/<slug> and /<page>), fills the nightstand from the reading
 // sync and opens the whole bookshelf. Add ?check to the address to see whether any text is hidden.
 
 const DATA = JSON.parse(document.getElementById("board-data").textContent);
@@ -49,7 +50,8 @@ for (const d of DATA.decos) {
 }
 
 // ---------- fit the board to the window, then let it rise in once, as one object
-const fitStage = () => { const s = Math.min((innerWidth - 56) / 1600, (innerHeight - 64) / 1000); fit.style.setProperty("--s", s); fit.dataset.s = s; };
+const W = DATA.w || 1600;
+const fitStage = () => { const s = Math.min((innerWidth - 56) / W, (innerHeight - 64) / 1000); fit.style.setProperty("--s", s); fit.dataset.s = s; };
 fitStage(); addEventListener("resize", fitStage);
 
 // ---------- caps: each .fit block may grow to data-cap board px; past that it fades and counts what is hidden
@@ -114,34 +116,41 @@ const check = () => {
 window.corkCheck = check;
 if (q.has("check")) (document.fonts?.ready || Promise.resolve()).then(() => setTimeout(check, 700));
 
-// ---------- essays: a sheet lifted off the board. /writing/<slug> is the same board with that sheet open.
+// ---------- essays and the owner's pages: a sheet lifted off the board. /writing/<slug> and /<page> are
+// the same board with that sheet open. Links that open one carry data-sheet (the sheet's id).
 const sheet = document.getElementById("sheet");
-const essayPath = (p) => /^\/writing\/([^/]+)\/?$/.exec(p)?.[1];
+const sheetFor = (path) => {
+  const essay = /^\/writing\/([^/]+)\/?$/.exec(path)?.[1];
+  if (essay) return "essay-" + essay;
+  const page = /^\/([^/]+)\/?$/.exec(path)?.[1];
+  return page && (DATA.pages || []).includes(page) ? "page-" + page : null;
+};
 let opener = null;
-const showEssay = (slug) => {
-  const art = document.getElementById("essay-" + slug); if (!art) return false;
+const showSheet = (id) => {
+  const art = document.getElementById(id); if (!art) return false;
   sheet.querySelectorAll(".essay").forEach((e) => (e.hidden = e !== art));
   document.title = `${art.dataset.title} · ${DATA.name}`;
-  if (sheet.open && !sheet.matches(":modal")) sheet.close(); // opened by the server for /writing/<slug>
+  sheet.setAttribute("aria-label", art.dataset.title);
+  if (sheet.open && !sheet.matches(":modal")) sheet.close(); // opened by the server for its own address
   if (!sheet.open) sheet.showModal();
   const box = sheet.querySelector(".sheet"); box.scrollTop = 0; box.focus({ preventScroll: true });
   return true;
 };
-const hideEssay = () => { if (sheet.open) sheet.close(); document.title = DATA.name; };
+const hideSheet = () => { if (sheet.open) sheet.close(); document.title = DATA.name; };
 stage.addEventListener("click", (e) => {
-  const a = e.target.closest("a[data-essay]");
+  const a = e.target.closest("a[data-sheet]");
   if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
   e.preventDefault(); e.stopPropagation();
   opener = a;
-  if (showEssay(a.dataset.essay)) history.pushState({ essay: a.dataset.essay }, "", a.getAttribute("href"));
+  if (showSheet(a.dataset.sheet)) history.pushState({ sheet: a.dataset.sheet }, "", a.getAttribute("href"));
 });
-const pinBack = () => { if (history.state?.essay) history.back(); else { hideEssay(); history.replaceState(null, "", "/"); } };
+const pinBack = () => { if (history.state?.sheet) history.back(); else { hideSheet(); history.replaceState(null, "", "/"); } };
 document.getElementById("unpin").addEventListener("click", (e) => { e.preventDefault(); pinBack(); });
 sheet.addEventListener("cancel", (e) => { e.preventDefault(); pinBack(); });
 sheet.addEventListener("click", (e) => { if (e.target === sheet) pinBack(); });
 sheet.addEventListener("close", () => opener?.focus?.());
-addEventListener("popstate", () => { const s = essayPath(location.pathname); s ? showEssay(s) : hideEssay(); });
-{ const s = essayPath(location.pathname); if (s) showEssay(s); }
+addEventListener("popstate", () => { const id = sheetFor(location.pathname); id ? showSheet(id) : hideSheet(); });
+{ const id = sheetFor(location.pathname); if (id) showSheet(id); }
 
 // ---------- the nightstand: four books being read, from the reading sync, and the whole shelf on demand
 const shelfdlg = document.getElementById("shelfdlg");
@@ -206,10 +215,10 @@ const liftPaper = (el) => {
   if (matchMedia("(max-width:760px), (max-height:460px)").matches) return; // phones: the CSS lays it out
   // full content first (caps off), then scale up to fill most of the board; very tall papers scroll inside
   const w = el.offsetWidth, h = el.offsetHeight;
-  const sc = Math.min(1.75, 1440 / w, Math.max(1.45, 900 / h));
+  const sc = Math.min(1.75, (W - 160) / w, Math.max(1.45, 900 / h));
   if (h * sc > 940) Object.assign(el.style, { maxHeight: Math.round(920 / sc) + "px", overflow: "auto", overscrollBehavior: "contain" });
   const hh = Math.min(h * sc, 940) / sc;
-  el.style.transform = `translate(${Math.round(800 - w / 2)}px,${Math.round(500 - hh / 2)}px) rotate(0deg) scale(${sc})`;
+  el.style.transform = `translate(${Math.round(W / 2 - w / 2)}px,${Math.round(500 - hh / 2)}px) rotate(0deg) scale(${sc})`;
 };
 stage.addEventListener("click", (e) => {
   if (e.target.closest("a, button, [data-shelf], .nightstand figure")) return;

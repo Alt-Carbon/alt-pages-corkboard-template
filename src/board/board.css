@@ -196,6 +196,20 @@ img{display:block}
 .stack .kind{font:var(--fs-xs)/1.2 var(--font-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
 .stack li>a{font-weight:500;font-size:var(--fs-lg)}
 .stack .auth{font-size:var(--fs-sm);color:var(--mute)}.stack .auth .me{color:var(--ink);font-weight:500}
+/* a plain sheet: one of the owner's own pages (content/pages), its text as written in Markdown */
+.leaf{width:264px;padding:24px 22px 20px;background:#fff;--r:1deg}
+.leaf h2{font:500 var(--fs-xl)/1.25 var(--font-display);padding-bottom:6px;border-bottom:1px solid var(--ink)}
+.leaf h2 a{text-decoration:none}
+.leaf h2 a:hover{text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:3px}
+.leaf .fit{margin-top:10px;font:var(--fs-md)/var(--lh-normal) var(--font-text)}
+.leaf .fit::before{content:"";display:table} /* keeps the photo's float inside the cap */
+.leaf .ph{float:right;width:76px;height:76px;margin:2px 0 6px 10px;object-fit:cover;background:#ddd;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.leaf p+*,.leaf ul+*,.leaf ol+*{margin-top:8px}
+.leaf .fit :is(h1,h2,h3,h4){margin-top:10px;font:500 var(--fs-base)/1.3 var(--font-display)}
+.leaf ul{list-style:disc;padding-left:18px}.leaf ol{list-style:decimal;padding-left:20px}
+.leaf .fit img:not(.ph){max-width:100%;height:auto}
+.leaf blockquote{margin:8px 0 0;padding-left:10px;border-left:2px solid var(--accent);font-style:italic}
+.leaf pre,.leaf table{max-width:100%;overflow:hidden;font-size:var(--fs-xs)}
 /* postcard, flyer */
 .post{display:grid;grid-template-columns:1.2fr 1fr;width:440px;min-height:230px;background:var(--card);--r:-2deg;
   background-image:linear-gradient(90deg,transparent calc(54% - 1px),var(--rule) calc(54% - 1px),var(--rule) 54%,transparent 54%)}
@@ -217,7 +231,7 @@ img{display:block}
 .bignote .fit{margin-top:12px}
 .fit.capped{overflow:hidden}
 .fit.clipped::after{content:"";position:absolute;left:0;right:0;bottom:0;height:64px;pointer-events:none;background:linear-gradient(rgba(255,255,255,0),var(--fade,var(--paper)))}
-.memo{--fade:#fff}.toc{--fade:#fff}.stack{--fade:var(--paper)}.post{--fade:var(--card)}.bignote{--fade:var(--yellow)}.receipt{--fade:#FDFDF9}
+.memo{--fade:#fff}.toc{--fade:#fff}.leaf{--fade:#fff}.stack{--fade:var(--paper)}.post{--fade:var(--card)}.bignote{--fade:var(--yellow)}.receipt{--fade:#FDFDF9}
 .more-tag{position:relative;z-index:1;display:inline-block;margin-top:-30px;margin-bottom:6px;padding:3px 8px;border-radius:999px;background:var(--ink);color:#fff;font:500 var(--fs-2xs)/1.3 var(--font-mono);letter-spacing:.04em;cursor:pointer}
 .item.lifted .fit{max-height:none!important}
 .item.lifted .fit.clipped::after,.item.lifted .more-tag{display:none}
@@ -289,6 +303,8 @@ img{display:block}
 .essay .footnotes{margin-top:40px;padding-top:16px;border-top:1px solid var(--rule)}
 .essay .footnotes h2{font:500 var(--fs-2xs)/1.2 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:0}
 .essay .footnotes ol{margin-top:10px}.essay .footnotes li{font-size:var(--fs-sm);color:var(--mute)}.essay .footnotes .back{text-decoration:none;color:var(--accent)}
+.essay>.photo{width:min(280px,100%);height:auto;margin-top:24px;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.essay>.photo+*{margin-top:24px}
 .essay .orig{margin-top:36px;font:var(--fs-xs)/1.4 var(--font-mono);color:var(--mute)}
 
 /* ---------------------------------------------------------------- phones: the board becomes a column
@@ -308,7 +324,7 @@ img{display:block}
   .letters{flex-wrap:wrap;justify-content:center}
   .post{grid-template-columns:1fr;width:100%;background-image:none}
   .post .addr{border-top:1px solid var(--rule)}
-  .memo,.bignote,.toc,.stack,.receipt,.nightstand,.badge{width:100%;max-width:400px}
+  .memo,.bignote,.toc,.stack,.receipt,.nightstand,.badge,.leaf{width:100%;max-width:400px}
   .polaroid{width:min(252px,80%)}
   .item.strip{display:none}
   .sheet{padding:40px 22px 56px;width:calc(100vw - 16px);transform:none}

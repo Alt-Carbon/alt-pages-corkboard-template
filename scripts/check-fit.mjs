@@ -26,8 +26,10 @@ const server = createServer((req, res) => {
 await new Promise((r) => server.listen(0, r));
 const base = `http://localhost:${server.address().port}`;
 
-const essays = [...readFileSync(join(DIST, "sitemap.xml"), "utf8").matchAll(/<loc>[^<]*?(\/writing\/[^<]+)<\/loc>/g)].map((m) => m[1]);
-const paths = ["/", ...essays.slice(0, 1)]; // the board, and the board under an open essay
+const locs = [...readFileSync(join(DIST, "sitemap.xml"), "utf8").matchAll(/<loc>https?:\/\/[^/<]+(\/[^<]*)<\/loc>/g)].map((m) => m[1]);
+const essays = locs.filter((p) => p.startsWith("/writing/"));
+const own = locs.filter((p) => p !== "/" && !p.startsWith("/writing/")); // the owner's own pages
+const paths = ["/", ...essays.slice(0, 1), ...own.slice(0, 1)]; // the board, and the board under an open essay or page
 
 let failed = 0;
 const browser = await chromium.launch({ channel: "chrome" });
@@ -38,11 +40,11 @@ try {
     page.on("pageerror", (e) => errors.push(String(e)));
     for (const path of paths) {
       if (path !== "/") {
-        // under an essay the board is meant to be covered: check the essay is open and nothing errored
+        // under an essay or page the board is meant to be covered: check its sheet is open and nothing errored
         await page.goto(`${base}${path}`, { waitUntil: "networkidle" });
         const open = await page.evaluate(() => { const s = document.getElementById("sheet"); return s.open && s.matches(":modal") && !!s.querySelector(".essay:not([hidden]) h1"); });
         failed += open ? errors.length : 1 + errors.length;
-        console.log(`${open && !errors.length ? "✓" : "✗"} ${path} at ${w}×${h}: essay ${open ? "open" : "NOT open"}`);
+        console.log(`${open && !errors.length ? "✓" : "✗"} ${path} at ${w}×${h}: sheet ${open ? "open" : "NOT open"}`);
         for (const e of errors.splice(0)) console.log(`    script error: ${e}`);
         continue;
       }

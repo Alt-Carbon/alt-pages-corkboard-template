@@ -8,19 +8,21 @@
 //   reading links -> a till receipt;  books -> the nightstand card, which opens the whole shelf
 //   research      -> a stapled stack
 //   contact       -> a "call me" sticker, a sheet of stamps and a postcard
+//   your pages    -> a plain sheet each (content/pages), up to four, in a column of their own
 // The part of a paper that grows with content sits in a .fit block with a height cap (data-cap,
 // board px). Past it the text fades and a tag counts what is hidden; lifting the paper shows it all.
 import layout from "./layout.json";
 
 export type Data = {
   site: { name: string; pronunciation: string; greeting: string; oneLiner: string; place: string; employer: string; employerUrl: string; photo: string; social: { label: string; url: string }[] };
-  about: { paragraphs: string[]; experience: { role: string; org: string; orgUrl: string; start: string; end: string }[]; contact: string; facts: { label: string; value: string }[] };
+  about: { paragraphs: string[]; experience: { role: string; org: string; orgUrl: string; start: string; end: string }[]; contact: string; facts: { label: string; value: string }[] } | null;
   now: { updated: string; groups: { heading: string; items: string[] }[] } | null;
   reading: { intro: string; links: { title: string; by: string; note: string; url: string }[] } | null;
   research: { items: { title: string; authors: string; venue: string; year: number; kind: string; url: string }[] } | null;
   posts: { slug: string; title: string; date: string; blurb: string; link: string; where: string }[];   // where: the chip for a piece on another site
   books: boolean;
   elsewhere: boolean;   // Medium or Substack set: their posts join the contents sheet in the browser
+  pages: { slug: string; title: string; photo: string; html: string }[];   // your pages on the board, in slot order; html is the rendered text
 };
 type H = { day: (d: string) => string; inline: (s: string) => string; years: (e: { start: string; end: string }) => string; markMe: (a: string) => string };
 
@@ -28,7 +30,7 @@ const CAPS = layout.caps as Record<string, number>;
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const esc = (s = "") => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const pin = (c = "") => `<i class="pin ${c}" aria-hidden="true"></i>`;
-const fact = (d: Data, label: string, fallback = "") => d.about.facts.find((f) => f.label === label)?.value || fallback;
+const fact = (d: Data, label: string, fallback = "") => d.about?.facts.find((f) => f.label === label)?.value || fallback;
 const town = (d: Data) => fact(d, "Based in", d.site.place).split(",")[0]!.trim();
 const first = (d: Data) => d.site.name.trim().split(/\s+/)[0]!;
 const photo = (d: Data) => d.site.photo || "/board/placeholder.svg";
@@ -80,6 +82,7 @@ function strip(d: Data) {
 }
 
 function memo(d: Data, h: H) {
+  if (!d.about) return "";
   const paras = d.about.paragraphs.map((p) => `<p>${h.inline(p)}</p>`).join("");
   const xp = d.about.experience.map((e) => `<li><span class="yrs">${esc(h.years(e))}</span> <b>${esc(e.role)}</b>, ${e.orgUrl ? `<a href="${esc(e.orgUrl)}">${esc(e.org)}</a>` : esc(e.org)}</li>`).join("");
   return `<section class="item memo" data-id="about" aria-label="About">
@@ -143,7 +146,7 @@ function nightstand() {
 }
 
 function contents(d: Data, h: H) {
-  const rows = d.posts.map((p) => `<li data-date="${esc(p.date)}"><a ${p.link ? `href="${esc(p.link)}"` : `href="/writing/${esc(p.slug)}" data-essay="${esc(p.slug)}"`}><span class="ttl">${esc(p.title)}</span>${p.where ? `<span class="where">${esc(p.where)}</span>` : ""}<span class="dots"></span><span class="date">${p.date.slice(0, 4)}</span></a>${p.blurb ? `<span class="blurb">${esc(p.blurb)}</span>` : ""}</li>`).join("");
+  const rows = d.posts.map((p) => `<li data-date="${esc(p.date)}"><a ${p.link ? `href="${esc(p.link)}"` : `href="/writing/${esc(p.slug)}" data-sheet="essay-${esc(p.slug)}"`}><span class="ttl">${esc(p.title)}</span>${p.where ? `<span class="where">${esc(p.where)}</span>` : ""}<span class="dots"></span><span class="date">${p.date.slice(0, 4)}</span></a>${p.blurb ? `<span class="blurb">${esc(p.blurb)}</span>` : ""}</li>`).join("");
   return `<section class="item toc" data-id="writing" aria-label="Writing">
   ${pin()}
   <h2>Writing</h2>
@@ -178,7 +181,7 @@ function call(d: Data) {
 }
 
 function postcard(d: Data, h: H) {
-  if (!d.about.contact) return "";
+  if (!d.about?.contact) return "";
   const lines = d.site.social.map((s) => `<li><a href="${esc(s.url)}">${esc(s.label)}</a></li>`).join("");
   return `<section class="item post" data-id="post" aria-label="Contact">
   ${pin()}
@@ -187,11 +190,25 @@ function postcard(d: Data, h: H) {
 </section>`;
 }
 
+// One of the owner's own pages: a plain sheet with its title, the photo if there is one, and the text.
+// The title opens the page as a sheet (its own address, /<name>), like an essay on the contents sheet.
+function leaf(p: Data["pages"][number], i: number) {
+  const id = `page${i + 1}`;
+  return `<section class="item leaf" data-id="${id}" aria-label="${esc(p.title)}">
+  ${pin("green")}
+  <h2><a href="/${esc(p.slug)}" data-sheet="page-${esc(p.slug)}">${esc(p.title)}</a></h2>
+  <div class="fit" data-cap="${CAPS[id]}">
+  ${p.photo ? `<img class="ph" src="${esc(p.photo)}" alt="" width="76" height="76">` : ""}
+  ${p.html}
+  </div>
+</section>`;
+}
+
 // Everything on the board, in paint order (later papers sit on top of earlier ones).
 export function papers(d: Data, h: H): string {
   return [
     badge(d), letters(d), polaroid(d), strip(d), memo(d, h),
     d.now && bigNote(d, h), d.now && calendar(d), d.books && nightstand(), d.reading?.links.length && receipt(d),
-    d.research?.items.length && stapled(d, h), (d.posts.length || d.elsewhere) && contents(d, h), stamps(d), call(d), postcard(d, h),
+    d.research?.items.length && stapled(d, h), (d.posts.length || d.elsewhere) && contents(d, h), ...d.pages.map(leaf), stamps(d), call(d), postcard(d, h),
   ].filter(Boolean).join("\n");
 }

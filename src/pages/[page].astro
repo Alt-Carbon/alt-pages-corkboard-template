@@ -1,0 +1,13 @@
+---
+// Your pages (content/pages/*.md, made in the editor under Your pages): the board with that page
+// lifted off it as a sheet, like an essay. A page switched off, or left off a full board, is still
+// built, but its address answers "not found" (see Board.astro and src/worker/off.js).
+import Board from "../layouts/Board.astro";
+import { ownPages } from "../lib/content";
+
+export async function getStaticPaths() {
+  return (await ownPages()).map((p) => ({ params: { page: p.id }, props: { page: p.id } }));
+}
+const { page } = Astro.props;
+---
+<Board page={page} />

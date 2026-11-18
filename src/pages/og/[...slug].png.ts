@@ -2,13 +2,13 @@
 // WhatsApp and search results show when someone shares a link.
 import type { APIRoute, GetStaticPaths } from "astro";
 import { cardPng, type Card } from "../../lib/cards";
-import { day, site, summary, writing } from "../../lib/content";
+import { day, shown, site, summary, writing } from "../../lib/content";
 
 // Card text is plain: inline Markdown markers are dropped.
 const plain = (s = "") => s.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/[*_`]/g, "");
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const posts = await writing();
+  const posts = (await shown()).has("writing") ? await writing() : [];
   const cards: Record<string, Card> = {
     home: { title: plain(site.oneLiner), subtitle: plain(site.intro) },
   };

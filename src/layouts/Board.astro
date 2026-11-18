@@ -1,8 +1,10 @@
 ---
 // The whole site is one cork board. The home page is the board; /writing/<slug> is the same board
 // with that essay lifted off it as a sheet, so every essay still has its own address, preview card
-// and place in search results. Papers come from src/board/papers.ts, positions from
-// src/board/layout.json, wall colour and cork darkness from Site settings.
+// and place in search results. The owner's own pages work the same way at /<name>. Papers come from
+// src/board/papers.ts, positions from src/board/layout.json, wall colour and cork darkness from
+// Site settings. A part switched off in the editor has no paper, and an address of its that is still
+// built carries the alt-pages-off marker, so the Worker answers "not found" (src/worker/off.js).
 import "@fontsource-variable/geist/wght.css";
 import "@fontsource-variable/geist/wght-italic.css";
 import "@fontsource-variable/eb-garamond/wght.css";
@@ -12,44 +14,61 @@ import { render } from "astro:content";
 import Shelf from "../components/Shelf.astro";
 import layout from "../board/layout.json";
 import { papers, type Data } from "../board/papers";
-import { about, accent, currentRole, day, elsewhere, inline, markMe, now, origin, owner, reading, repo, research, shown, site, summary, template, whereIs, writing, writingPage, years } from "../lib/content";
+import { pagesOnBoard } from "../board/own";
+import { about, accent, currentRole, day, elsewhere, inline, markMe, now, origin, owner, reading, repo, research, shown, site, summary, switchedOff, template, whereIs, writing, writingPage, years } from "../lib/content";
 import { stress } from "../lib/stress";
 
-interface Props { essay?: string }
-const { essay } = Astro.props;
+// essay: the essay lifted off the board (/writing/<slug>); page: one of the owner's pages (/<name>)
+interface Props { essay?: string; page?: string }
+const { essay, page } = Astro.props;
 
-const posts = await writing();
 const on = await shown();
+const posts = on.has("writing") ? await writing() : [];
+const mine = await pagesOnBoard();
 const base: Data = {
   site,
-  about,
+  about: on.has("about") ? about : null,
   now: on.has("now") ? now : null,
   reading: on.has("reading") ? reading : null,
   research: on.has("research") ? research : null,
   posts: posts.map((p) => ({ slug: p.id, title: p.data.title, date: p.data.date.toISOString().slice(0, 10), blurb: p.data.blurb || "", link: p.data.link || "", where: p.data.link ? whereIs(p.data.link) : "" })),
   books: on.has("reading"),
-  elsewhere,
+  elsewhere: on.has("writing") && elsewhere,
+  pages: mine.map((p) => ({ slug: p.id, title: p.data.title, photo: p.data.photo, html: p.rendered?.html ?? "" })),
 };
 // STRESS=1 npm run build: the same board with long content everywhere, for the fit check.
 const data = process.env.STRESS === "1" ? stress(base) : base;
 const board = papers(data, { day, inline, years, markMe });
 const essays = await Promise.all(posts.filter((p) => !p.data.link).map(async (p) => ({ post: p, Content: (await render(p)).Content })));
 const open = essays.find((e) => e.post.id === essay)?.post;
+const leaves = await Promise.all(mine.map(async (p) => ({ entry: p, Content: (await render(p)).Content })));
+const openPage = leaves.find((l) => l.entry.id === page)?.entry;
+// An essay address while Writing is switched off, or a page that is switched off or left off the full board.
+const off = (essay !== undefined && switchedOff("writing")) || (page !== undefined && !openPage);
 
 // Head: the same SEO and link previews the Sidebar template generates.
-const title = open ? `${open.data.title} · ${site.name}` : site.name;
-const desc = open ? summary(open) : `${site.oneLiner} ${site.intro}`.trim();
+const title = open ? `${open.data.title} · ${site.name}` : openPage ? `${openPage.data.title} · ${site.name}` : site.name;
+const desc = open ? summary(open) : openPage ? openPage.data.description || summary({ body: openPage.body, data: {} }) : `${site.oneLiner} ${site.intro}`.trim();
 const host = origin(Astro.url);
 const path = Astro.url.pathname.replace(/\.html$/, "").replace(/\/index$/, "/") || "/";
 const img = host + (open ? `/og/writing/${open.id}.png` : "/og/home.png");
 const sameAs = site.social.map((l) => l.url).filter((u) => /^https?:/.test(u));
-const person = { "@type": "Person", name: site.name, url: host + "/", ...(site.photo && { image: host + site.photo }), ...(about.shortBio && { description: about.shortBio }), ...(currentRole ? { jobTitle: currentRole.role, worksFor: { "@type": "Organization", name: currentRole.org } } : {}), ...(sameAs.length && { sameAs }) };
+// With About switched off, its bio and work stay out of the page's data too.
+const bio = on.has("about");
+const person = { "@type": "Person", name: site.name, url: host + "/", ...(site.photo && { image: host + site.photo }), ...(bio && about.shortBio && { description: about.shortBio }), ...(bio && currentRole ? { jobTitle: currentRole.role, worksFor: { "@type": "Organization", name: currentRole.org } } : {}), ...(sameAs.length && { sameAs }) };
 const ld = open
   ? { "@context": "https://schema.org", "@type": "BlogPosting", headline: open.data.title, description: desc, url: host + path, image: img, datePublished: open.data.date.toISOString().slice(0, 10), author: person }
+  : openPage
+  ? { "@context": "https://schema.org", "@type": "WebPage", name: openPage.data.title, description: desc, url: host + path, author: person }
   : { "@context": "https://schema.org", "@type": "ProfilePage", url: host + "/", mainEntity: person };
 const CORK = { natural: 0.08, warm: 0.24, dark: 0.4 } as Record<string, number>;
-const vars = `:root{--wall:${site.wall};--tint-a:${CORK[site.cork] ?? 0.24};--accent:${accent.light}}`;
-const boardData = { name: site.name, items: layout.items, decos: layout.decos, hide: writingPage.hide };
+// The board has no room left for the owner's pages, so with any on it the cork grows a column for them
+// (set on #fit itself, so board.css's default width doesn't win).
+const W = data.pages.length ? layout.pagesWidth : 1600;
+// html:root, not :root: this style comes before board.css, whose :root sets the same variables
+// to their defaults, so the owner's Site settings need the stronger selector to show.
+const vars = `html:root{--wall:${site.wall};--tint-a:${CORK[site.cork] ?? 0.24};--accent:${accent.light}}`;
+const boardData = { name: site.name, w: W, items: layout.items, decos: layout.decos, hide: writingPage.hide, pages: mine.map((p) => p.id) };
 ---
 <!doctype html>
 <html lang="en">
@@ -60,9 +79,11 @@ const boardData = { name: site.name, items: layout.items, decos: layout.decos, h
 <title>{title}</title>
 <meta name="description" content={desc}>
 <meta name="author" content={site.name}>
+{off && <meta name="robots" content="noindex">}
+{off && <meta name="alt-pages-off" content="">}
 <link rel="canonical" href={host + path}>
 <meta property="og:site_name" content={site.name}>
-<meta property="og:title" content={open ? open.data.title : site.name}>
+<meta property="og:title" content={open?.data.title ?? openPage?.data.title ?? site.name}>
 <meta property="og:description" content={desc}>
 <meta property="og:type" content={open ? "article" : "website"}>
 <meta property="og:url" content={host + path}>
@@ -72,7 +93,7 @@ const boardData = { name: site.name, items: layout.items, decos: layout.decos, h
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="alternate" type="application/rss+xml" href="/rss.xml" title={`${site.name}: writing`}>
+{on.has("writing") && <link rel="alternate" type="application/rss+xml" href="/rss.xml" title={`${site.name}: writing`}>}
 <link rel="sitemap" type="application/xml" href="/sitemap.xml">
 <script type="application/ld+json" set:html={JSON.stringify(ld).replace(/</g, "\\u003c")} />
 <meta name="portfolio-template" content={`${template.name}@${template.version}`}>
@@ -83,7 +104,7 @@ const boardData = { name: site.name, items: layout.items, decos: layout.decos, h
 <body>
   <!-- The owner's content/custom.css: first in the body, so it comes after every stylesheet Astro adds to the head (and wins), yet still loads before anything is drawn. -->
   <link rel="stylesheet" href="/custom.css" />
-<div id="fit">
+<div id="fit" style={`--W:${W}`}>
   <main id="stage" aria-label={`${site.name}'s board`}>
     <Fragment set:html={board} />
     <div id="decos" aria-hidden="true"></div>
@@ -91,13 +112,20 @@ const boardData = { name: site.name, items: layout.items, decos: layout.decos, h
   </main>
 </div>
 
-<dialog id="sheet" aria-label="Essay" open={open ? true : undefined}>
+<dialog id="sheet" aria-label={open?.data.title ?? openPage?.data.title ?? "Essay"} open={open || openPage ? true : undefined}>
   <div class="sheet" tabindex="-1">
     <a class="close" id="unpin" href="/">Pin back</a>
     {essays.map(({ post, Content }) => (
       <article class="essay" id={`essay-${post.id}`} data-title={post.data.title} hidden={post.id !== open?.id}>
         <p class="date">{day(post.data.date)} · {(post.body || "").split(/\s+/).filter(Boolean).length.toLocaleString("en")} words</p>
         <h1>{post.data.title}</h1>
+        <Content />
+      </article>
+    ))}
+    {leaves.map(({ entry, Content }) => (
+      <article class="essay" id={`page-${entry.id}`} data-title={entry.data.title} hidden={entry.id !== openPage?.id}>
+        <h1>{entry.data.title}</h1>
+        {entry.data.photo && <img class="photo" src={entry.data.photo} alt="" width="280" height="280">}
         <Content />
       </article>
     ))}

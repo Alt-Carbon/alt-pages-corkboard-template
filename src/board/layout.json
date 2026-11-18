@@ -1,5 +1,7 @@
 {
   "_": "Where each paper sits on the 1600 x 1000 board (x, y = top-left in board px, r = degrees), the stickers, and how tall each paper's growing part may get. Edit by hand; there is no visual editor yet.",
+  "_pages": "page1 to page4 hold up to four of the owner's own pages (content/pages), in title order. The board has no room left for them, so when there is at least one the cork grows to pagesWidth and they sit in a column on the right.",
+  "pagesWidth": 1960,
   "items": {
     "card": {
       "x": -24,
@@ -70,6 +72,26 @@
       "x": -34,
       "y": 796,
       "r": -3
+    },
+    "page1": {
+      "x": 1672,
+      "y": -8,
+      "r": 1.5
+    },
+    "page2": {
+      "x": 1666,
+      "y": 244,
+      "r": -1.2
+    },
+    "page3": {
+      "x": 1674,
+      "y": 494,
+      "r": 1
+    },
+    "page4": {
+      "x": 1664,
+      "y": 744,
+      "r": -1.6
     }
   },
   "decos": [
@@ -162,6 +184,10 @@
     "reading": 600,
     "writing": 320,
     "research": 384,
-    "post": 130
+    "post": 130,
+    "page1": 120,
+    "page2": 120,
+    "page3": 120,
+    "page4": 120
   }
 }
