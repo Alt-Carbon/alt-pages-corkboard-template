@@ -24,7 +24,7 @@ const reading = JSON.parse(readFileSync("content/reading.json", "utf8"));
 // after a profile is added. YAML double-quoted strings, so no raw double quotes inside.
 const SAMPLE = !String(site.goodreads || "").trim() && reading.show !== false;
 const sampleWarning = SAMPLE
-  ? "⚠️ Not set yet, so your Reading page is showing a sample shelf: Otis Chandler’s, not yours. Paste your profile address here, or turn the Reading page off under Reading. "
+  ? "⚠️ Not set yet, so your Reading page shows a sample shelf. "
   : "";
 
 // The same for Medium and Substack: until one is set, the Writing page (if it has any pieces) also
@@ -33,7 +33,7 @@ const postSources = { medium: mediumSource(site.medium), substack: substackSourc
 const pieces = existsSync("content/writing") ? readdirSync("content/writing").filter((f) => f.endsWith(".md")).length : 0;
 const SAMPLE_POSTS = !postSources.medium && !postSources.substack && pieces > 0;
 const postsWarning = SAMPLE_POSTS
-  ? "⚠️ Neither Medium nor Substack is set yet, so the Writing page is showing sample posts (Ev Williams’s and On Substack’s), not yours. "
+  ? "⚠️ Not set yet, so your Writing page shows sample posts. "
   : "";
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 const accents = JSON.parse(readFileSync("src/lib/accents.json", "utf8"));
@@ -131,9 +131,9 @@ singletons:
       - { label: Cork, name: cork, widget: select, default: warm, required: false, hint: "How dark the cork board is.", options: [ { label: "Natural: light cork", value: natural }, { label: "Warm: a little darker (the default)", value: warm }, { label: "Dark: deep brown", value: dark } ] }
       - { label: Bookshelf style, name: shelf, widget: select, default: journal, hint: "How your books look when someone opens the shelf from the nightstand card.", options: [ { label: "Journal: a year-by-year reading log with your reviews", value: journal }, { label: "Gallery: large covers, a book opens in a panel tinted its own colour", value: gallery }, { label: "Stacks: books lying in piles by year, titles readable", value: stacks }, { label: "Turn: 3D books on a dark shelf that turn to face you", value: turn } ] }
       - { label: Accent colour, name: accent, widget: select, default: aerospace-orange, hint: "The colour of the pushpins, link underlines and focus rings.", options: [ ${accents.map((a) => `{ label: "${a.label}", value: ${a.id}, color: "${a.light}" }`).join(", ")} ] }
-      - { label: Goodreads profile, name: goodreads, widget: string, required: false, hint: "${sampleWarning}Paste your Goodreads profile address. Your 'read' and 'currently reading' shelves appear on the Reading page. The profile must be public." }
-      - { label: Medium, name: medium, widget: string, required: false, hint: "${postsWarning}Your Medium profile address or @handle (a publication works too). Your newest stories join the Writing page with a small Medium chip, each linking to the story on Medium. Medium only shares the latest 10." }
-      - { label: Substack, name: substack, widget: string, required: false, hint: "${postsWarning}Your Substack address, e.g. yourname.substack.com or your own domain. Your newest posts join the Writing page with a small Substack chip, each linking to the post. Substack shares the latest 20." }
+      - { label: Goodreads profile, name: goodreads, widget: string, required: false, hint: "${sampleWarning}Your Goodreads profile address. It must be public." }
+      - { label: Medium, name: medium, widget: string, required: false, hint: "${postsWarning}Your Medium address or @handle. Shows your 10 newest stories." }
+      - { label: Substack, name: substack, widget: string, required: false, hint: "${postsWarning}Your Substack address, e.g. yourname.substack.com. Shows your 20 newest posts." }
       - label: Advanced
         name: advanced
         widget: object
@@ -141,8 +141,8 @@ singletons:
         required: false
         hint: "Rarely needed. Leave these as they are unless something is not working."
         fields:
-          - { label: Site address, name: url, widget: string, required: false, hint: "Leave empty: the site fills in its own address when someone visits. Only set this (e.g. https://asha.example.com) if link previews show the wrong address." }
-          - { label: Get improvements automatically, name: autoUpdate, widget: boolean, default: true, required: false, hint: "Once a week your site picks up fixes and improvements from the template it was made from, by itself. Your words, photos and settings are never changed. Turn off to keep the site exactly as it is." }
+          - { label: Site address, name: url, widget: string, required: false, hint: "Leave empty. Only set it if link previews show the wrong address." }
+          - { label: Get improvements automatically, name: autoUpdate, widget: boolean, default: true, required: false, hint: "Weekly fixes from the template. Your words and photos are never touched." }
   - name: now
     label: Now
     icon: calendar_today
@@ -190,7 +190,7 @@ singletons:
     file: content/reading.json
     format: json
     fields:
-          - { label: Show the Reading page, name: show, widget: boolean, default: true, required: false, hint: "${SAMPLE ? "⚠️ No Goodreads profile yet, so this page shows a sample shelf (Otis Chandler’s, the founder of Goodreads), not your books. Add your profile under Site settings, or turn this off to hide the page. " : ""}Off takes the receipt and the nightstand card off your board." }
+          - { label: Show the Reading page, name: show, widget: boolean, default: true, required: false, hint: "${SAMPLE ? "⚠️ No Goodreads profile yet, so this shows a sample shelf. " : ""}Off takes the receipt and the nightstand card off your board." }
           - { label: Subtitle, name: intro, widget: text, required: false, hint: "One line under the Reading title. Also the page's description in search results and link previews." }
   - name: writing_page
     label: Writing page
@@ -198,8 +198,8 @@ singletons:
     file: content/writing.json
     format: json
     fields:
-          - { label: Subtitle, name: intro, widget: text, required: false, hint: "A line under the Writing title. Also the page's description in search results and link previews. Your pieces are under Writing; posts from Medium and Substack join them once those are set under Site settings." }
-          - { label: Posts to leave out, name: hide, widget: list, required: false, collapsed: true, source: /writing/elsewhere.json, field: { label: Address, name: url, widget: string }, hint: "${postsWarning}Addresses of Medium or Substack posts that should not appear on the Writing page or the home page." }
+          - { label: Subtitle, name: intro, widget: text, required: false, hint: "A line under the Writing title, also used in search results and link previews." }
+          - { label: Posts to leave out, name: hide, widget: list, required: false, collapsed: true, source: /writing/elsewhere.json, field: { label: Address, name: url, widget: string }, hint: "Medium or Substack posts to hide from your site." }
   - name: research
     label: Research
     icon: science
