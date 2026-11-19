@@ -25,6 +25,7 @@ So a change anywhere else, such as `src/`, `public/` or `scripts/`, is undone at
 | Hiding a page | its `"show": false` (`content/about.json`, `writing.json`, `research.json`, `reading.json`, `now.json`), or the page's switch in the editor | Yes |
 | A new page (Projects, Talks…) | a Markdown file in `content/pages/` (`title`, optional `show`, `photo`, `description`, then the text), or Your pages in the editor | Yes |
 | A setting the template already has (accent colour, …) | `content/site.json`, or the editor | Yes |
+| Which page (which paper on the board) a field is edited on, in the editor | `site_pages` in `scripts/prepare.mjs` | **No** (template code) |
 | A different layout or new behaviour | `src/` | **No**, see below |
 
 If what they ask for needs `src/`, tell them, before you change anything, that the weekly update will undo it. Their choice is to keep updates (and lose the change), or turn updates off and keep the change: `"advanced": { "autoUpdate": false }` in `content/site.json`, or Site settings → Advanced → "Get improvements automatically" in the editor. Updates off means no more fixes from the template. Never turn them off without asking.
@@ -65,6 +66,15 @@ Files: `src/layouts/Board.astro` (the page), `src/board/board.css` (the board an
 ### Parts of the page
 
 `.sheet`, `.memo`, `.polaroid`, `.receipt`, `.cal`, `.letters`, `.post`, `.bignote` the kinds of paper · `.leaf` one of your own pages (`content/pages`) on the board · `.pin`, `.tape`, `.stamp`, `.deco` decorations · `.essay` a piece of writing or one of your pages on its own address (`/writing/<name>`, `/<name>`)
+
+## The editor's marks: data-field
+
+The editor at `/admin` shows the board beside its form. Hovering a field outlines the paper or the words on the board that show it, and clicking something on the board opens its field. It finds them by a `data-field` attribute on the element that shows the value (most are in `src/board/papers.ts`):
+
+- `data-field="site.greeting"`: a field of a content file, as `<file's name in the editor config>.<field>` (`site`, `about`, `now`, `research`, `reading`, `writing_page`).
+- `data-field="writing:<slug>"`: one piece of writing (a row on the contents sheet); `data-field="writing:<slug>.title"` its title on the essay sheet. Your pages use `pages:<slug>`.
+
+When you change markup in `src/`, keep these attributes on the element that shows the value. An element whose only content is the value's text (no child elements) also shows what the owner types, live. The name tag and the letter stickers can't be plain text, so each carries a hidden text copy (`.vh`, also what screen readers read) that `src/board/board.js` redraws them from. Missing marks break nothing; that part just doesn't light up. In the editor's preview a click on a marked element opens its field instead of lifting the paper, so marks go on the words inside a paper, not on links or buttons that must still work there (such as "See all my books").
 
 ## Ask first, or leave alone
 

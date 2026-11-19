@@ -11,7 +11,9 @@
 //   your pages    -> a plain sheet each (content/pages), up to four, in a column of their own
 // The part of a paper that grows with content sits in a .fit block with a height cap (data-cap,
 // board px). Past it the text fades and a tag counts what is hidden; lifting the paper shows it all.
+// data-field marks what shows each field, for the editor's preview (AGENTS.md, "The editor's marks").
 import layout from "./layout.json";
+import { greetingTiles, nameSize } from "./text";
 
 export type Data = {
   site: { name: string; pronunciation: string; greeting: string; oneLiner: string; place: string; employer: string; employerUrl: string; photo: string; social: { label: string; url: string }[] };
@@ -37,37 +39,26 @@ const photo = (d: Data) => d.site.photo || "/board/placeholder.svg";
 const email = (d: Data) => d.site.social.find((s) => s.url.startsWith("mailto:"))?.url.replace("mailto:", "") || "";
 
 function badge(d: Data) {
-  const name = first(d), size = Math.min(44, Math.floor(270 / (0.48 * Math.max(name.length, 1))));
-  const place = fact(d, "Based in", d.site.place);
-  const where = [d.site.employer && (d.site.employerUrl ? `<a href="${esc(d.site.employerUrl)}">${esc(d.site.employer)}</a>` : esc(d.site.employer)), esc(place)].filter(Boolean).join(" · ");
+  const name = first(d), size = nameSize(name);
+  const fromFacts = !!fact(d, "Based in"), place = fact(d, "Based in", d.site.place);
+  const where = [d.site.employer && (d.site.employerUrl ? `<a href="${esc(d.site.employerUrl)}" data-field="site.employer">${esc(d.site.employer)}</a>` : `<span data-field="site.employer">${esc(d.site.employer)}</span>`), place && `<span data-field="${fromFacts ? "about.facts" : "site.place"}">${esc(place)}</span>`].filter(Boolean).join(" · ");
   return `<section class="item badge" data-id="card" aria-label="Who">
   <header><span>Hello</span><small>my name is</small></header>
-  <h1 class="hand" style="font-size:${size}px">${esc(name)}<span class="vh"> ${esc(d.site.name.slice(name.length))}</span></h1>
-  <p class="line clamp2">${esc(d.site.oneLiner)}</p>
+  <h1 class="hand" style="font-size:${size}px" data-field="site.name"><span aria-hidden="true">${esc(name)}</span><span class="vh" data-field="site.name">${esc(d.site.name)}</span></h1>
+  <p class="line clamp2" data-field="site.oneLiner">${esc(d.site.oneLiner)}</p>
   ${where ? `<p class="meta">${where}</p>` : ""}
 </section>`;
 }
 
 function letters(d: Data) {
   const g = d.site.greeting || `Hi, I am ${first(d)}`;
-  const palette = ["gold", "red", "blue", "green", "orange", "pink"];
-  let i = 0;
-  const tiles = [...g].map((ch) => {
-    if (ch === " ") return '<i class="sp"></i>';
-    if (!/[\p{L}\p{N}]/u.test(ch)) return `<i class="pt">${esc(ch)}</i>`;
-    const t = `<b class="${palette[i % 6]}" style="--t:${((i * 7) % 11) - 5}deg">${esc(ch)}</b>`;
-    i++;
-    return t;
-  }).join("");
-  // tiles shrink to keep the greeting within ~450px; a very long one wraps onto a second row
-  const n = [...g].filter((c) => /[\p{L}\p{N}]/u.test(c)).length + 0.4 * (g.split(" ").length - 1);
-  let tile = Math.min(40, Math.floor(440 / Math.max(n, 1)) - 4);
-  if (tile < 24) tile = Math.max(22, Math.min(32, Math.floor(880 / Math.max(n, 1)) - 4));
-  return `<p class="item letters" data-id="letters" style="--tile:${tile}px" aria-label="${esc(g)}"><span aria-hidden="true">${tiles}</span></p>`;
+  const { html, tile } = greetingTiles(g, esc);
+  // The stickers for the eye; the greeting as text for screen readers (and for the editor's preview to type into).
+  return `<p class="item letters" data-id="letters" style="--tile:${tile}px" data-field="site.greeting"><span aria-hidden="true">${html}</span><span class="vh" data-field="site.greeting">${esc(g)}</span></p>`;
 }
 
 function polaroid(d: Data) {
-  return `<figure class="item polaroid" data-id="photo">
+  return `<figure class="item polaroid" data-id="photo" data-field="site.photo">
   <i class="tape" aria-hidden="true"></i>
   <img src="${esc(photo(d))}" alt="Portrait of ${esc(d.site.name)}" width="228" height="228">
   ${town(d) ? `<figcaption>${esc(town(d))}</figcaption>` : ""}
@@ -75,7 +66,7 @@ function polaroid(d: Data) {
 }
 
 function strip(d: Data) {
-  return `<figure class="item strip" data-id="strip" aria-hidden="true">
+  return `<figure class="item strip" data-id="strip" aria-hidden="true" data-field="site.photo">
   ${[0, 1, 2, 3].map((i) => `<img src="${esc(photo(d))}" alt="" class="f${i}" width="100" height="100">`).join("")}
   <figcaption>photobooth</figcaption>
 </figure>`;
@@ -83,14 +74,14 @@ function strip(d: Data) {
 
 function memo(d: Data, h: H) {
   if (!d.about) return "";
-  const paras = d.about.paragraphs.map((p) => `<p>${h.inline(p)}</p>`).join("");
+  const paras = d.about.paragraphs.map((p) => `<p data-field="about.paragraphs">${h.inline(p)}</p>`).join("");
   const xp = d.about.experience.map((e) => `<li><span class="yrs">${esc(h.years(e))}</span> <b>${esc(e.role)}</b>, ${e.orgUrl ? `<a href="${esc(e.orgUrl)}">${esc(e.org)}</a>` : esc(e.org)}</li>`).join("");
   return `<section class="item memo" data-id="about" aria-label="About">
   ${pin("blue")}
   <header><span><b>From</b> ${esc(d.site.name)}</span><span><b>Re</b> about me</span></header>
   <div class="fit" data-cap="${CAPS.about}">
   ${paras}
-  ${xp ? `<h3>Work</h3><ol class="xp">${xp}</ol>` : ""}
+  ${xp ? `<h3>Work</h3><ol class="xp" data-field="about.experience">${xp}</ol>` : ""}
   </div>
 </section>`;
 }
@@ -100,8 +91,8 @@ function bigNote(d: Data, h: H) {
   const body = now.groups.map((g) => `<h3>${esc(g.heading)}</h3><ul>${g.items.map((x) => `<li>${h.inline(x)}</li>`).join("")}</ul>`).join("");
   return `<section class="item bignote" data-id="now" aria-label="Now">
   <h2>Now</h2>
-  <div class="fit" data-cap="${CAPS.now}">${body}</div>
-  <p class="when">updated ${esc(h.day(now.updated))}</p>
+  <div class="fit" data-cap="${CAPS.now}" data-field="now.groups">${body}</div>
+  <p class="when" data-field="now.updated">updated ${esc(h.day(now.updated))}</p>
 </section>`;
 }
 
@@ -114,8 +105,8 @@ function calendar(d: Data) {
   const rows = [];
   for (let i = 0; i < cells.length; i += 7) rows.push(`<tr>${cells.slice(i, i + 7).map((n) => `<td${n === dd ? ' class="hit"' : ""}>${n || ""}</td>`).join("")}</tr>`);
   return `<section class="item cal" data-id="cal" aria-label="Calendar">
-  <h2>${MONTHS[m - 1]}<span>${y}</span></h2>
-  <table><thead><tr><th>Mo</th><th>Tu</th><th>We</th><th>Th</th><th>Fr</th><th>Sa</th><th>Su</th></tr></thead><tbody>${rows.join("")}</tbody></table>
+  <h2 data-field="now.updated">${MONTHS[m - 1]}<span>${y}</span></h2>
+  <table data-field="now.updated"><thead><tr><th>Mo</th><th>Tu</th><th>We</th><th>Th</th><th>Fr</th><th>Sa</th><th>Su</th></tr></thead><tbody>${rows.join("")}</tbody></table>
   <p class="note">↑ last updated the Now note</p>
 </section>`;
 }
@@ -126,7 +117,7 @@ function receipt(d: Data) {
   return `<section class="item receipt" data-id="reading" aria-label="Reading list">
   ${pin("blue")}
   <h2>Reading list</h2>
-  ${r.intro ? `<p class="sub">${esc(r.intro)}</p>` : ""}
+  ${r.intro ? `<p class="sub" data-field="reading.intro">${esc(r.intro)}</p>` : ""}
   <p class="meta">No. ${String(r.links.length).padStart(3, "0")} · all items keep</p>
   <ol class="fit" data-cap="${CAPS.reading}">${rows}</ol>
   <p class="total"><span>Items</span><span>${r.links.length}</span></p>
@@ -140,13 +131,13 @@ function receipt(d: Data) {
 function nightstand() {
   return `<section class="item nightstand" data-id="books" aria-label="Reading now">
   <h2>On the nightstand <span data-books-count></span></h2>
-  <div class="row" data-books><span class="wait">Fetching the shelf…</span></div>
+  <div class="row" data-books data-field="site.goodreads"><span class="wait">Fetching the shelf…</span></div>
   <button type="button" class="more" data-shelf aria-haspopup="dialog">See all my books →</button>
 </section>`;
 }
 
 function contents(d: Data, h: H) {
-  const rows = d.posts.map((p) => `<li data-date="${esc(p.date)}"><a ${p.link ? `href="${esc(p.link)}"` : `href="/writing/${esc(p.slug)}" data-sheet="essay-${esc(p.slug)}"`}><span class="ttl">${esc(p.title)}</span>${p.where ? `<span class="where">${esc(p.where)}</span>` : ""}<span class="dots"></span><span class="date">${p.date.slice(0, 4)}</span></a>${p.blurb ? `<span class="blurb">${esc(p.blurb)}</span>` : ""}</li>`).join("");
+  const rows = d.posts.map((p) => `<li data-date="${esc(p.date)}" data-field="writing:${esc(p.slug)}"><a ${p.link ? `href="${esc(p.link)}"` : `href="/writing/${esc(p.slug)}" data-sheet="essay-${esc(p.slug)}"`}><span class="ttl">${esc(p.title)}</span>${p.where ? `<span class="where">${esc(p.where)}</span>` : ""}<span class="dots"></span><span class="date">${p.date.slice(0, 4)}</span></a>${p.blurb ? `<span class="blurb">${esc(p.blurb)}</span>` : ""}</li>`).join("");
   return `<section class="item toc" data-id="writing" aria-label="Writing">
   ${pin()}
   <h2>Writing</h2>
@@ -155,7 +146,7 @@ function contents(d: Data, h: H) {
 }
 
 function stapled(d: Data, h: H) {
-  const items = d.research!.items.map((r) => `<li><span class="kind">${esc([r.kind, [r.venue, r.year].filter(Boolean).join(" ")].filter(Boolean).join(" · "))}</span>${r.url ? `<a href="${esc(r.url)}">${esc(r.title)}</a>` : `<span class="t">${esc(r.title)}</span>`}${r.authors ? `<span class="auth">${h.markMe(r.authors)}</span>` : ""}</li>`).join("");
+  const items = d.research!.items.map((r) => `<li data-field="research.items"><span class="kind">${esc([r.kind, [r.venue, r.year].filter(Boolean).join(" ")].filter(Boolean).join(" · "))}</span>${r.url ? `<a href="${esc(r.url)}">${esc(r.title)}</a>` : `<span class="t">${esc(r.title)}</span>`}${r.authors ? `<span class="auth">${h.markMe(r.authors)}</span>` : ""}</li>`).join("");
   return `<section class="item stack" data-id="research" aria-label="Research">
   <i class="staple" aria-hidden="true"></i>
   <h2>Research</h2>
@@ -167,14 +158,14 @@ function stamps(d: Data) {
   const tones = ["red", "blue", "green", "orange"];
   const links = d.site.social.filter((s) => !s.url.startsWith("mailto:"));
   if (!links.length) return "";
-  const out = links.map((s, i) => `<a class="stamp ${tones[i % 4]}" href="${esc(s.url)}"><span>${esc(s.label)}</span></a>`).join("");
+  const out = links.map((s, i) => `<a class="stamp ${tones[i % 4]}" data-field="site.social" href="${esc(s.url)}"><span>${esc(s.label)}</span></a>`).join("");
   return `<nav class="item stamps" data-id="stamps" style="--cols:${links.length === 3 ? 3 : links.length <= 4 ? 2 : 3}" aria-label="Elsewhere">${out}</nav>`;
 }
 
 function call(d: Data) {
   const e = email(d);
   if (!e) return "";
-  return `<a class="item call" data-id="call" href="mailto:${esc(e)}" aria-label="Email ${esc(first(d))}">
+  return `<a class="item call" data-id="call" data-field="site.social" href="mailto:${esc(e)}" aria-label="Email ${esc(first(d))}">
   <span class="big"><i aria-hidden="true">☎</i> Call ${esc(first(d))}</span>
   <span class="small">${esc(e)}</span>
 </a>`;
@@ -185,8 +176,8 @@ function postcard(d: Data, h: H) {
   const lines = d.site.social.map((s) => `<li><a href="${esc(s.url)}">${esc(s.label)}</a></li>`).join("");
   return `<section class="item post" data-id="post" aria-label="Contact">
   ${pin()}
-  <div class="msg"><h2>Say hello</h2><p class="fit" data-cap="${CAPS.post}">${h.inline(d.about.contact)}</p></div>
-  <div class="addr"><i class="stamp" aria-hidden="true"></i><ul>${lines}</ul></div>
+  <div class="msg"><h2>Say hello</h2><p class="fit" data-cap="${CAPS.post}" data-field="about.contact">${h.inline(d.about.contact)}</p></div>
+  <div class="addr"><i class="stamp" aria-hidden="true"></i><ul data-field="site.social">${lines}</ul></div>
 </section>`;
 }
 
@@ -196,9 +187,9 @@ function leaf(p: Data["pages"][number], i: number) {
   const id = `page${i + 1}`;
   return `<section class="item leaf" data-id="${id}" aria-label="${esc(p.title)}">
   ${pin("green")}
-  <h2><a href="/${esc(p.slug)}" data-sheet="page-${esc(p.slug)}">${esc(p.title)}</a></h2>
-  <div class="fit" data-cap="${CAPS[id]}">
-  ${p.photo ? `<img class="ph" src="${esc(p.photo)}" alt="" width="76" height="76">` : ""}
+  <h2 data-field="pages:${esc(p.slug)}.title"><a href="/${esc(p.slug)}" data-sheet="page-${esc(p.slug)}">${esc(p.title)}</a></h2>
+  <div class="fit" data-cap="${CAPS[id]}" data-field="pages:${esc(p.slug)}">
+  ${p.photo ? `<img class="ph" src="${esc(p.photo)}" alt="" width="76" height="76" data-field="pages:${esc(p.slug)}.photo">` : ""}
   ${p.html}
   </div>
 </section>`;

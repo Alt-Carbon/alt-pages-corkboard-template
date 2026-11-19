@@ -230,6 +230,56 @@ singletons:
               - { label: Kind, name: kind, widget: select, default: Paper, options: [${RESEARCH_KINDS.join(", ")}] }
               - { label: Link, name: url, widget: string, required: false, hint: "The DOI or main page. The title links here." }
               - { label: Note, name: note, widget: string, required: false }${links("links", "More links", "PDF, Code, Data, Slides, Recording", "              ")}
+# The editor by page. The whole site is one board, so each "page" here is a kind of paper pinned on
+# it, in the order they sit on the board, each with the fields that show on it. Fields not named here
+# stay in Site settings (your name, social links, the wall, cork and pin colours). Files don't move;
+# only the editor groups them.
+site_pages:
+  - id: nametag
+    label: Name tag
+    url: /
+    lede: "The 'Hello, my name is' badge, and your greeting in letter stickers across the top of the board. Your name itself is in Site settings, as it shows everywhere."
+    fields: [site.greeting, site.oneLiner, site.employer, site.employerUrl, site.place]
+  - id: photos
+    label: Photos
+    url: /
+    lede: "Your photo, pinned to the board as a polaroid and a photobooth strip."
+    fields: [site.photo]
+  - id: now
+    label: Now
+    url: /
+    show: now.show
+    lede: "The big sticky note with what you're focused on this month, and the calendar beside it with the day you last updated it circled."
+    fields: [now.groups, now.updated]
+  - id: reading
+    label: Reading
+    url: /
+    show: reading.show
+    lede: "The nightstand card shows what you're reading now, from your Goodreads shelf, and opens the whole shelf. Until you add your profile, it shows a sample shelf."
+    fields: [site.goodreads, site.shelf, reading.intro]
+  - id: writing
+    label: Writing
+    url: /
+    show: writing_page.show
+    tabs:
+      - { label: On this site, lede: "The contents sheet on the board. Each title opens the piece as a sheet lifted off the board.", fields: [writing_page.intro], collection: writing, entry_url: "/writing/{slug}" }
+      - { label: Elsewhere, lede: "Posts you write on Medium or Substack, listed on the contents sheet with the rest. They're fetched by themselves, about once an hour.", fields: [site.medium, site.substack, writing_page.hide] }
+  - id: research
+    label: Research
+    url: /
+    show: research.show
+    lede: "The stapled stack of papers and talks."
+    fields: [research.items, research.intro]
+  - id: about
+    label: About
+    url: /
+    show: about.show
+    fields:
+      - { group: The memo, fields: [about.paragraphs, about.experience] }
+      - { group: The postcard, fields: [about.contact] }
+      - { group: Not on the board, fields: [about.facts, about.shortBio, about.cv] }
+    note: "Your short bio goes into what search engines read about you. A fact labelled Based in replaces your place on the name tag and the polaroid."
+  - { own: pages, entry_url: "/{slug}" }
 collections:
   - name: writing
     label: Writing

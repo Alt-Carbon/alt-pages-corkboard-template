@@ -4,6 +4,8 @@
 // /writing/<slug> and /<page>), fills the nightstand from the reading
 // sync and opens the whole bookshelf. Add ?check to the address to see whether any text is hidden.
 
+import { greetingTiles, nameSize } from "./text";
+
 const DATA = JSON.parse(document.getElementById("board-data").textContent);
 const stage = document.getElementById("stage"), fit = document.getElementById("fit"), decosEl = document.getElementById("decos");
 const q = new URLSearchParams(location.search);
@@ -31,6 +33,22 @@ const STICKERS = {
 // template; Alt Carbon's merch stickers live only on Alt Carbon's own boards.
 const PICTURES = {};
 for (const [k, h] of Object.entries(PICTURES)) STICKERS[k] = () => `<img src="/board/stickers/${k}.png" alt="" style="height:${h}px" draggable="false">`;
+
+// ---------- the editor's preview types into the name and greeting as the owner edits them (the hidden
+// text copies marked data-field); redraw the name tag and the letter stickers from that text.
+const live = (sel, draw) => {
+  const el = stage.querySelector(sel);
+  if (el) new MutationObserver(() => draw(el.textContent || "")).observe(el, { childList: true, characterData: true, subtree: true });
+};
+const escHtml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+live('.badge .hand > .vh', (name) => {
+  const h = stage.querySelector(".badge .hand"), first = name.trim().split(/\s+/)[0] || "";
+  h.firstElementChild.textContent = first; h.style.fontSize = nameSize(first) + "px";
+});
+live('.letters > .vh', (g) => {
+  const p = stage.querySelector(".letters"), { html, tile } = greetingTiles(g.trim() || `Hi, I am ${DATA.name.trim().split(/\s+/)[0]}`, escHtml);
+  p.firstElementChild.innerHTML = html; p.style.setProperty("--tile", tile + "px");
+});
 
 // ---------- place everything
 const items = [...stage.querySelectorAll(".item[data-id]")];
@@ -182,6 +200,7 @@ if (toc) {
     for (const p of v.posts) {
       if (!p.date || out.has(norm(p.url))) continue;
       const li = document.createElement("li"); li.dataset.date = p.date;
+      li.dataset.field = p.source === "substack" ? "site.substack" : "site.medium"; // the editor: where this row comes from
       li.innerHTML = `<a href="${esc(p.url)}"><span class="ttl">${esc(p.title)}</span><span class="where">${esc(WHERE[p.source] || p.source)}</span><span class="dots"></span><span class="date">${p.date.slice(0, 4)}</span></a>${p.blurb ? `<span class="blurb">${esc(p.blurb)}</span>` : ""}`;
       const older = [...toc.children].find((row) => (row.dataset.date || "") < p.date);
       toc.insertBefore(li, older ?? null);

@@ -118,14 +118,14 @@ const boardData = { name: site.name, w: W, items: layout.items, decos: layout.de
     {essays.map(({ post, Content }) => (
       <article class="essay" id={`essay-${post.id}`} data-title={post.data.title} hidden={post.id !== open?.id}>
         <p class="date">{day(post.data.date)} · {(post.body || "").split(/\s+/).filter(Boolean).length.toLocaleString("en")} words</p>
-        <h1>{post.data.title}</h1>
+        <h1 data-field={`writing:${post.id}.title`}>{post.data.title}</h1>
         <Content />
       </article>
     ))}
     {leaves.map(({ entry, Content }) => (
       <article class="essay" id={`page-${entry.id}`} data-title={entry.data.title} hidden={entry.id !== openPage?.id}>
-        <h1>{entry.data.title}</h1>
-        {entry.data.photo && <img class="photo" src={entry.data.photo} alt="" width="280" height="280">}
+        <h1 data-field={`pages:${entry.id}.title`}>{entry.data.title}</h1>
+        {entry.data.photo && <img class="photo" src={entry.data.photo} alt="" width="280" height="280" data-field={`pages:${entry.id}.photo`}>}
         <Content />
       </article>
     ))}
@@ -137,7 +137,7 @@ const boardData = { name: site.name, w: W, items: layout.items, decos: layout.de
     <div class="sheet shelf">
       <button class="close" type="button" id="shelfclose">Pin back</button>
       <h2>Reading</h2>
-      {reading.intro && <p class="src"><Fragment set:html={inline(reading.intro)} /></p>}
+      {reading.intro && <p class="src" data-field="reading.intro"><Fragment set:html={inline(reading.intro)} /></p>}
       <Shelf goodreads={site.goodreads} style={site.shelf} />
     </div>
   </dialog>
